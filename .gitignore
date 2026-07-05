@@ -224,3 +224,5 @@ site_files/
 *.png
 *.db
 .claude/settings.local.json
+
+testing/

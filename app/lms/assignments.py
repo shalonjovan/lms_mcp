@@ -185,9 +185,19 @@ async def download_attachment(assignment_id: str, attachment_url: str, filename:
     out_dir = GENERATED_DIR / "assignments" / assignment_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Use page to download
-    async with page.expect_download() as download_info:
-        await page.goto(attachment_url, wait_until="networkidle")
+    # Trigger download via JS anchor click (avoids page.goto issues with binary downloads)
+    async with page.expect_download(timeout=30000) as download_info:
+        await page.evaluate(
+            """(url) => {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }""",
+            attachment_url,
+        )
 
     download = await download_info.value
     suggested = download.suggested_filename

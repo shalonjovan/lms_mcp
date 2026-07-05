@@ -29,7 +29,7 @@ ACTIVITY_LINK = "a.activity-link"
 # Assignment page
 ASSIGNMENT_TITLE = "h1"  # or h2 within #region-main
 ASSIGNMENT_DESC = "div[data-region='assignment-info']"
-ASSIGNMENT_INTRO = "div.no-overflow"
+ASSIGNMENT_INTRO = "div.activity-description, div#intro"
 ASSIGNMENT_DATES = "div[data-region='activity-dates']"
 SUBMISSION_STATUS = "div[data-region='submission-status']"
 SUBMIT_BUTTON = "button#id-submitbutton"
