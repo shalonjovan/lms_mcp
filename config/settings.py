@@ -6,12 +6,31 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Fix: re-read password from .env directly to handle $ escaping that dotenv mangles
+def _fix_password():
+    try:
+        with open(".env") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("LMS_PASSWORD=") and not line.startswith("#"):
+                    raw_val = line.split("=", 1)[1]
+                    if len(raw_val) >= 2 and raw_val[0] == raw_val[-1] and raw_val[0] in ('"', "'"):
+                        raw_val = raw_val[1:-1]
+                    raw_val = raw_val.replace("$$", "$").replace("\\$", "$")
+                    current = os.environ.get("LMS_PASSWORD", "")
+                    if "$" in raw_val and "$" not in current:
+                        os.environ["LMS_PASSWORD"] = raw_val
+                    return raw_val
+    except FileNotFoundError:
+        pass
+    return os.environ.get("LMS_PASSWORD", "")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # LMS
 LMS_URL = os.getenv("LMS_URL", "https://lms.ssn.edu.in")
 LMS_USERNAME = os.getenv("LMS_USERNAME", "")
-LMS_PASSWORD = os.getenv("LMS_PASSWORD", "")
+LMS_PASSWORD = _fix_password()
 
 # AI Provider
 AI_PROVIDER = os.getenv("AI_PROVIDER", "google")

@@ -1,12 +1,13 @@
 """Playwright browser manager for LMS interaction."""
 
 import asyncio
+import re
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, Callable, Awaitable, TypeVar
 
 from playwright.async_api import async_playwright, Browser, Page, Playwright
 
-from config.settings import LMS_URL
+T = TypeVar("T")
 
 
 class BrowserManager:
@@ -16,12 +17,10 @@ class BrowserManager:
         self._playwright: Optional[Playwright] = None
         self._browser: Optional[Browser] = None
         self._page: Optional[Page] = None
+        self._lock = asyncio.Lock()
 
     async def start(self, headless: bool = True) -> Page:
         """Launch browser and return a new page."""
-        if self._page and not self._page.is_closed():
-            return self._page
-
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(
             headless=headless,
@@ -72,6 +71,25 @@ class BrowserManager:
         page = await self.page()
         await page.screenshot(path=path, full_page=True)
 
+    @asynccontextmanager
+    async def use(self):
+        """Acquire exclusive access to the browser page.
+
+        Usage:
+            mgr = await get_browser()
+            async with mgr.use() as page:
+                await page.goto(...)
+        """
+        async with self._lock:
+            page = await self.page()
+            yield page
+
+    async def execute(self, fn: Callable[[Page], Awaitable[T]]) -> T:
+        """Run a function with exclusive page access."""
+        async with self._lock:
+            page = await self.page()
+            return await fn(page)
+
 
 # Global singleton
 _browser_manager: Optional[BrowserManager] = None
@@ -99,4 +117,11 @@ async def get_page() -> Page:
     return await mgr.page()
 
 
-import re
+async def execute(fn: Callable[[Page], Awaitable[T]]) -> T:
+    """Run a function with exclusive access to the browser page.
+
+    This is the recommended way to interact with the browser.
+    It ensures no two operations run concurrently on the same page.
+    """
+    mgr = await get_browser()
+    return await mgr.execute(fn)

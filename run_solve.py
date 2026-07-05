@@ -84,7 +84,7 @@ async def main():
         # Step 2: Get assignment details
         print(f"\n[2/5] Fetching details for assignment {ASSIGNMENT_ID}...")
         details = await get_assignment(ASSIGNMENT_ID)
-        title = details.get("title") or "Ex-1: DDL for Tamil Nadu Tourism"
+        title = details.get("title") or "sdgfsdfsdf"
         course = details.get("course") or "UCS3411-DL-CSE-C-26"
         intro = details.get("intro") or ""
         attachments = details.get("attachments") or []

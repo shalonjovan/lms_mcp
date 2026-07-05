@@ -3,119 +3,551 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMS Assistant Dashboard</title>
+    <title>LMS Assistant</title>
     <style>
+        :root {
+            --bg: #ece0d1;
+            --card: #dbc1ac;
+            --accent: #967259;
+            --dark: #634832;
+            --darker: #38220f;
+            --white: #fff9f2;
+            --shadow: rgba(56,34,15,0.12);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #1a1a2e;
-            padding: 2rem;
+            background: var(--bg);
+            color: var(--darker);
+            min-height: 100vh;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #16213e; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+
+        .header {
+            background: var(--darker);
+            color: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .header h1 span { color: var(--card); }
+        .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
         .stat-card {
-            background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--white);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 10px var(--shadow);
+            border-left: 4px solid var(--accent);
         }
-        .stat-card h3 { font-size: 0.85rem; text-transform: uppercase; color: #888; margin-bottom: 0.5rem; }
-        .stat-card .value { font-size: 2rem; font-weight: 700; }
+        .stat-card h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--darker);
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
         .card {
-            background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--white);
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+        .card h2 {
+            font-size: 1.05rem;
+            color: var(--darker);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--bg);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--bg);
+            font-size: 0.88rem;
+        }
+        th {
+            color: var(--accent);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        td { color: var(--dark); }
+        td:first-child { font-weight: 500; color: var(--darker); }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .badge-new { background: #fef3c7; color: #92400e; }
+        .badge-solved { background: #d1fae5; color: #065f46; }
+        .badge-submitted { background: #dbeafe; color: #1e40af; }
+        .badge-draft { background: #f3e8ff; color: #6b21a8; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--shadow); }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--white);
+        }
+        .btn-primary:hover { background: var(--dark); }
+        .btn-secondary {
+            background: var(--card);
+            color: var(--darker);
+        }
+        .btn-secondary:hover { background: #cdb49c; }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.75rem; }
+        .btn-success {
+            background: #059669;
+            color: white;
+        }
+        .btn-success:hover { background: #047857; }
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+        .btn-outline:hover { background: var(--accent); color: var(--white); }
+
+        .actions-cell { display: flex; gap: 0.4rem; flex-wrap: nowrap; }
+
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            background: var(--darker);
+            color: var(--white);
+            padding: 0.9rem 1.3rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            max-width: 380px;
+        }
+        .toast-error { background: #dc2626; }
+        .toast-success { background: #059669; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(56,34,15,0.35);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-box {
+            background: var(--white);
+            padding: 2rem 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 4px solid var(--card);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-box p { color: var(--dark); font-size: 0.9rem; }
+
+        .solution-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(56,34,15,0.4);
+            z-index: 9997;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .solution-modal.active { display: flex; }
+        .solution-content {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 720px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+        }
+        .solution-content h2 {
+            color: var(--darker);
+            margin-bottom: 0.5rem;
+        }
+        .solution-content .type-badge {
+            display: inline-block;
+            background: var(--card);
+            color: var(--darker);
+            padding: 0.15rem 0.6rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
             margin-bottom: 1rem;
         }
-        .card h2 { font-size: 1.1rem; margin-bottom: 0.8rem; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        th { font-weight: 600; color: #666; font-size: 0.8rem; text-transform: uppercase; }
-        .badge {
-            display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 500;
+        .solution-content pre {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
         }
-        .badge-new { background: #e8f5e9; color: #2e7d32; }
-        .badge-solved { background: #e3f2fd; color: #1565c0; }
-        .badge-submitted { background: #f3e5f5; color: #7b1fa2; }
-        .badge-draft { background: #fff3e0; color: #e65100; }
-        .btn {
-            display: inline-block; padding: 0.4rem 1rem; border-radius: 8px;
-            font-size: 0.85rem; text-decoration: none; border: none; cursor: pointer;
+        .solution-content .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
         }
-        .btn-primary { background: #1565c0; color: white; }
-        .btn-secondary { background: #e0e0e0; color: #333; }
-        .actions { display: flex; gap: 0.5rem; }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: var(--accent);
+        }
+        .empty-state p { font-size: 0.95rem; }
+
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .header { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+            .header h1 { font-size: 1.1rem; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .action-bar { flex-direction: column; }
+            table { font-size: 0.8rem; }
+            th:nth-child(3), td:nth-child(3) { display: none; }
+            .actions-cell { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>LMS Assistant Dashboard</h1>
 
-        <div class="stats">
-            <div class="stat-card">
-                <h3>All Assignments</h3>
-                <div class="value">{{ assignments|length }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Courses</h3>
-                <div class="value">{{ courses|length }}</div>
-            </div>
-            <div class="stat-card" style="background: #e8f5e9;">
-                <h3>New / Pending</h3>
-                <div class="value">{{ new_count }}</div>
-            </div>
-            <div class="stat-card" style="background: #e3f2fd;">
-                <h3>Solved / Ready</h3>
-                <div class="value">{{ solved_count }}</div>
-            </div>
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p id="loadingText">Loading...</p>
+    </div>
+</div>
+<div class="solution-modal" id="solutionModal">
+    <div class="solution-content">
+        <h2 id="solutionTitle">Solution</h2>
+        <div class="type-badge" id="solutionType"></div>
+        <pre id="solutionBody"></pre>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeSolution()">Close</button>
+            <button class="btn btn-primary" id="submitFromSolutionBtn">Generate & Submit</button>
         </div>
+    </div>
+</div>
 
-        <div class="card">
-            <h2>Assignments</h2>
+<header class="header">
+    <h1>LMS <span>Assistant</span></h1>
+    <div class="header-actions">
+        <span id="loginStatus" style="font-size:0.82rem;color:var(--card);"></span>
+        <button class="btn btn-secondary btn-sm" id="loginBtn" onclick="handleLogin()">Login</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Total</h3>
+            <div class="value">{{ assignments|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Courses</h3>
+            <div class="value">{{ courses|length }}</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#f59e0b;">
+            <h3>New</h3>
+            <div class="value">{{ new_count }}</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#059669;">
+            <h3>Solved</h3>
+            <div class="value">{{ solved_count }}</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-primary" onclick="getAssignments()">Get Assignments</button>
+        <button class="btn btn-secondary" onclick="checkUnsubmitted()">Check Unsubmitted</button>
+    </div>
+
+    <div class="card">
+        <h2>Assignments</h2>
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
                         <th>Title</th>
                         <th>Course</th>
-                        <th>Due Date</th>
-                        <th>Type</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="assignmentsBody">
                     {% for a in assignments %}
-                    <tr>
-                        <td><strong>{{ a.title[:60] }}{% if a.title|length > 60 %}...{% endif %}</strong></td>
-                        <td>{{ a.course_name[:30] if a.course_name else '-' }}</td>
-                        <td>{{ a.due_date[:12] if a.due_date else '-' }}</td>
-                        <td>{{ a.assignment_type if a.assignment_type else '-' }}</td>
+                    <tr data-id="{{ a.assignment_id }}">
+                        <td>{{ a.title[:80] }}{% if a.title|length > 80 %}...{% endif %}</td>
+                        <td>{{ a.course_name[:25] if a.course_name else '-' }}</td>
                         <td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
-                        <td class="actions">
-                            <a class="btn btn-primary" href="/api/assignments/{{ a.assignment_id }}">View</a>
+                        <td class="actions-cell">
+                            <button class="btn btn-primary btn-sm" onclick="solveAssignment('{{ a.assignment_id }}')">Solve</button>
+                            <button class="btn btn-success btn-sm" onclick="submitAssignment('{{ a.assignment_id }}')">Submit</button>
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="6" style="text-align:center;color:#999;padding:2rem;">No assignments found</td></tr>
+                    <tr><td colspan="4"><div class="empty-state"><p>No assignments loaded. Click "Get Assignments" to fetch from LMS.</p></div></td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-
-        <div class="card">
-            <h2>Actions</h2>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                <button class="btn btn-primary" onclick="checkNow()">Check for New Assignments</button>
-                <button class="btn btn-secondary" onclick="location.reload()">Refresh Page</button>
-            </div>
-        </div>
     </div>
+</div>
 
-    <script>
-        function checkNow() {
-            fetch('/api/check-now', { method: 'POST' })
-                .then(r => r.json())
-                .then(d => { alert('Check completed: ' + JSON.stringify(d)); location.reload(); })
-                .catch(e => alert('Error: ' + e));
+<script>
+let loggedIn = false;
+let currentSolutionId = null;
+
+function toast(msg, type) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast' + (type ? ' toast-' + type : '');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+function showLoading(text) {
+    document.getElementById('loadingText').textContent = text || 'Loading...';
+    document.getElementById('loadingOverlay').classList.add('active');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function closeSolution() {
+    document.getElementById('solutionModal').classList.remove('active');
+    document.getElementById('submitFromSolutionBtn').onclick = null;
+    currentSolutionId = null;
+}
+
+async function checkLoginStatus() {
+    try {
+        const r = await fetch('/api/login-status');
+        const d = await r.json();
+        loggedIn = d.logged_in;
+        updateLoginUI();
+    } catch { loggedIn = false; updateLoginUI(); }
+}
+
+function updateLoginUI() {
+    const btn = document.getElementById('loginBtn');
+    const status = document.getElementById('loginStatus');
+    if (loggedIn) {
+        btn.textContent = 'Logout';
+        btn.className = 'btn btn-danger btn-sm';
+        status.textContent = 'Logged in';
+    } else {
+        btn.textContent = 'Login';
+        btn.className = 'btn btn-secondary btn-sm';
+        status.textContent = 'Not logged in';
+    }
+}
+
+async function handleLogin() {
+    if (loggedIn) {
+        showLoading('Logging out...');
+        try {
+            await fetch('/api/logout', { method: 'POST' });
+            loggedIn = false;
+            updateLoginUI();
+            toast('Logged out successfully', 'success');
+        } catch (e) {
+            toast('Logout failed: ' + e.message, 'error');
         }
-    </script>
+        hideLoading();
+        return;
+    }
+    showLoading('Logging in to LMS...');
+    try {
+        const r = await fetch('/api/login', { method: 'POST' });
+        const d = await r.json();
+        if (d.success) {
+            loggedIn = true;
+            updateLoginUI();
+            toast('Login successful', 'success');
+        } else {
+            toast('Login failed', 'error');
+        }
+    } catch (e) {
+        toast('Login error: ' + e.message, 'error');
+    }
+    hideLoading();
+}
+
+async function getAssignments() {
+    showLoading('Fetching assignments from LMS...');
+    try {
+        const r = await fetch('/api/assignments/live');
+        const d = await r.json();
+        toast('Fetched ' + d.assignments.length + ' assignments', 'success');
+        location.reload();
+    } catch (e) {
+        toast('Failed to get assignments: ' + e.message, 'error');
+    }
+    hideLoading();
+}
+
+async function checkUnsubmitted() {
+    showLoading('Checking submission status...');
+    try {
+        const r = await fetch('/api/assignments/unsubmitted');
+        const d = await r.json();
+        const tbody = document.getElementById('assignmentsBody');
+        if (d.assignments.length === 0) {
+            toast('All assignments are submitted!', 'success');
+            hideLoading();
+            return;
+        }
+        let html = '';
+        for (const a of d.assignments) {
+            const status = a.submission_status || 'not submitted';
+            html += '<tr data-id="' + a.assignment_id + '">';
+            html += '<td>' + (a.title ? a.title.slice(0, 80) : '-') + '</td>';
+            html += '<td>' + (a.course_name ? a.course_name.slice(0, 25) : '-') + '</td>';
+            html += '<td><span class="badge badge-draft">' + status + '</span></td>';
+            html += '<td class="actions-cell">';
+            html += '<button class="btn btn-primary btn-sm" onclick="solveAssignment(\'' + a.assignment_id + '\')">Solve</button>';
+            html += '<button class="btn btn-success btn-sm" onclick="submitAssignment(\'' + a.assignment_id + '\')">Submit</button>';
+            html += '</td></tr>';
+        }
+        tbody.innerHTML = html;
+        toast('Found ' + d.assignments.length + ' unsubmitted assignment(s)', 'success');
+    } catch (e) {
+        toast('Failed to check: ' + e.message, 'error');
+    }
+    hideLoading();
+}
+
+async function solveAssignment(id) {
+    showLoading('Solving assignment...');
+    try {
+        const r = await fetch('/api/assignments/' + id + '/solve', { method: 'POST' });
+        const d = await r.json();
+        hideLoading();
+        document.getElementById('solutionTitle').textContent = 'Solution for Assignment #' + id;
+        document.getElementById('solutionType').textContent = d.type || 'document';
+        document.getElementById('solutionBody').textContent = d.solution;
+        currentSolutionId = id;
+        document.getElementById('submitFromSolutionBtn').onclick = function() {
+            closeSolution();
+            submitAssignment(id);
+        };
+        document.getElementById('solutionModal').classList.add('active');
+        toast('Solution generated', 'success');
+    } catch (e) {
+        hideLoading();
+        toast('Solve failed: ' + e.message, 'error');
+    }
+}
+
+async function submitAssignment(id) {
+    showLoading('Submitting assignment (classify → solve → document → upload → submit)...');
+    try {
+        const r = await fetch('/api/assignments/' + id + '/submit', { method: 'POST' });
+        const d = await r.json();
+        if (d.success) {
+            toast('Assignment ' + id + ' submitted successfully!', 'success');
+            // Update row status
+            const row = document.querySelector('tr[data-id="' + id + '"]');
+            if (row) {
+                const statusCell = row.querySelector('td:nth-child(3)');
+                if (statusCell) statusCell.innerHTML = '<span class="badge badge-submitted">submitted</span>';
+            }
+        } else {
+            toast('Submission failed for ' + id, 'error');
+        }
+    } catch (e) {
+        toast('Submit error: ' + e.message, 'error');
+    }
+    hideLoading();
+}
+
+checkLoginStatus();
+</script>
 </body>
 </html>

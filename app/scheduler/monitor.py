@@ -7,6 +7,7 @@ from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config.settings import POLL_INTERVAL_MINUTES
+from app.lms.auth import login
 from app.lms.assignments import list_assignments, get_assignment
 from app.database.repository import save_assignment, get_all_assignments
 from app.notifications.notifier import notify_new_assignment
@@ -25,6 +26,7 @@ def on_new_assignment(callback):
 async def _check_for_new_assignments():
     """Poll the LMS dashboard and save any new assignments."""
     try:
+        await login()
         assignments = await list_assignments()
         for assign in assignments:
             is_new = save_assignment(assign["id"], assign)
