@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Assistant Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #16213e; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .stat-card h3 { font-size: 0.85rem; text-transform: uppercase; color: #888; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; }
+        .card {
+            background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1rem;
+        }
+        .card h2 { font-size: 1.1rem; margin-bottom: 0.8rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        th { font-weight: 600; color: #666; font-size: 0.8rem; text-transform: uppercase; }
+        .badge {
+            display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 500;
+        }
+        .badge-new { background: #e8f5e9; color: #2e7d32; }
+        .badge-solved { background: #e3f2fd; color: #1565c0; }
+        .badge-submitted { background: #f3e5f5; color: #7b1fa2; }
+        .badge-draft { background: #fff3e0; color: #e65100; }
+        .btn {
+            display: inline-block; padding: 0.4rem 1rem; border-radius: 8px;
+            font-size: 0.85rem; text-decoration: none; border: none; cursor: pointer;
+        }
+        .btn-primary { background: #1565c0; color: white; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .actions { display: flex; gap: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LMS Assistant Dashboard</h1>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>All Assignments</h3>
+                <div class="value">{{ assignments|length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Courses</h3>
+                <div class="value">{{ courses|length }}</div>
+            </div>
+            <div class="stat-card" style="background: #e8f5e9;">
+                <h3>New / Pending</h3>
+                <div class="value">{{ new_count }}</div>
+            </div>
+            <div class="stat-card" style="background: #e3f2fd;">
+                <h3>Solved / Ready</h3>
+                <div class="value">{{ solved_count }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Assignments</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Course</th>
+                        <th>Due Date</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in assignments %}
+                    <tr>
+                        <td><strong>{{ a.title[:60] }}{% if a.title|length > 60 %}...{% endif %}</strong></td>
+                        <td>{{ a.course_name[:30] if a.course_name else '-' }}</td>
+                        <td>{{ a.due_date[:12] if a.due_date else '-' }}</td>
+                        <td>{{ a.assignment_type if a.assignment_type else '-' }}</td>
+                        <td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+                        <td class="actions">
+                            <a class="btn btn-primary" href="/api/assignments/{{ a.assignment_id }}">View</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" style="text-align:center;color:#999;padding:2rem;">No assignments found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Actions</h2>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="checkNow()">Check for New Assignments</button>
+                <button class="btn btn-secondary" onclick="location.reload()">Refresh Page</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkNow() {
+            fetch('/api/check-now', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => { alert('Check completed: ' + JSON.stringify(d)); location.reload(); })
+                .catch(e => alert('Error: ' + e));
+        }
+    </script>
+</body>
+</html>
