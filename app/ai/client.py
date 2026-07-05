@@ -1,6 +1,7 @@
 """AI client abstraction — supports Anthropic, OpenAI, and Google Gemini."""
 
 import logging
+import time
 from typing import Any
 
 from config.settings import (
@@ -11,6 +12,25 @@ from config.settings import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _retry_on_quota(fn, max_retries=3, base_delay=5):
+    """Call fn, retrying on 429 quota errors with exponential backoff."""
+    for attempt in range(max_retries):
+        try:
+            return fn()
+        except Exception as e:
+            err_str = str(e)
+            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str or "quota" in err_str.lower():
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    logger.warning(f"Quota exceeded (attempt {attempt+1}/{max_retries}), retrying in {delay}s...")
+                    time.sleep(delay)
+                else:
+                    logger.error(f"Quota exceeded after {max_retries} retries")
+                    raise
+            else:
+                raise
 
 
 class LLMClient:
@@ -52,15 +72,17 @@ class LLMClient:
         max_tokens: int = 4096,
         temperature: float = 0.7,
     ) -> str:
-        """Generate a response from the LLM."""
+        """Generate a response from the LLM with automatic retry on quota errors."""
         self._check_configured()
 
         if self.provider == "anthropic":
-            return self._anthropic_generate(system_prompt, user_prompt, max_tokens, temperature)
+            fn = lambda: self._anthropic_generate(system_prompt, user_prompt, max_tokens, temperature)
         elif self.provider == "openai":
-            return self._openai_generate(system_prompt, user_prompt, max_tokens, temperature)
+            fn = lambda: self._openai_generate(system_prompt, user_prompt, max_tokens, temperature)
         else:
-            return self._google_generate(system_prompt, user_prompt, max_tokens, temperature)
+            fn = lambda: self._google_generate(system_prompt, user_prompt, max_tokens, temperature)
+
+        return _retry_on_quota(fn)
 
     def _anthropic_generate(
         self, system: str, user: str, max_tokens: int, temperature: float
@@ -93,7 +115,7 @@ class LLMClient:
     ) -> str:
         from google.genai import types
         response = self._google.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             config=types.GenerateContentConfig(
                 system_instruction=system,
                 max_output_tokens=max_tokens,
@@ -195,7 +217,7 @@ class LLMClient:
             parts.append(types.Part.from_bytes(data=img_data, mime_type=mime))
 
         response = self._google.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             config=types.GenerateContentConfig(
                 system_instruction=system,
                 max_output_tokens=max_tokens,

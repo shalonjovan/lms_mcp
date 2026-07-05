@@ -362,7 +362,16 @@
                     <tr data-id="{{ a.assignment_id }}">
                         <td>{{ a.title[:80] }}{% if a.title|length > 80 %}...{% endif %}</td>
                         <td>{{ a.course_name[:25] if a.course_name else '-' }}</td>
-                        <td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+                        <td>{% set s = a.submission_status or a.status or '' %}
+                            {% if 'submitted' in s.lower() %}
+                            <span class="badge badge-submitted">Submitted</span>
+                            {% elif s and s != 'unknown' %}
+                            <span class="badge badge-draft">{{ s[:25] }}</span>
+                            {% elif s == 'unknown' or not s %}
+                            <span class="badge badge-new">Pending</span>
+                            {% else %}
+                            <span class="badge badge-{{ a.status }}">{{ a.status }}</span>
+                            {% endif %}</td>
                         <td class="actions-cell">
                             <button class="btn btn-primary btn-sm" onclick="solveAssignment('{{ a.assignment_id }}')">Solve</button>
                             <button class="btn btn-success btn-sm" onclick="submitAssignment('{{ a.assignment_id }}')">Submit</button>
@@ -464,8 +473,27 @@ async function getAssignments() {
     try {
         const r = await fetch('/api/assignments/live');
         const d = await r.json();
+        const tbody = document.getElementById('assignmentsBody');
+        let html = '';
+        for (const a of d.assignments) {
+            const status = a.status || 'unknown';
+            const isSubmitted = status.toLowerCase().includes('submitted');
+            const badgeClass = isSubmitted ? 'badge-submitted' : 'badge-new';
+            const badgeText = isSubmitted ? 'Submitted' : (status && status !== 'unknown' ? status : 'Pending');
+            html += '<tr data-id="' + a.id + '">';
+            html += '<td>' + (a.title ? a.title.slice(0, 80) : '-') + '</td>';
+            html += '<td>' + (a.course ? a.course.slice(0, 25) : '-') + '</td>';
+            html += '<td><span class="badge ' + badgeClass + '">' + badgeText + '</span></td>';
+            html += '<td class="actions-cell">';
+            html += '<button class="btn btn-primary btn-sm" onclick="solveAssignment(\'' + a.id + '\')">Solve</button>';
+            html += '<button class="btn btn-success btn-sm" onclick="submitAssignment(\'' + a.id + '\')">Submit</button>';
+            html += '</td></tr>';
+        }
+        if (d.assignments.length === 0) {
+            html = '<tr><td colspan="4"><div class="empty-state"><p>No assignments found on dashboard.</p></div></td></tr>';
+        }
+        tbody.innerHTML = html;
         toast('Fetched ' + d.assignments.length + ' assignments', 'success');
-        location.reload();
     } catch (e) {
         toast('Failed to get assignments: ' + e.message, 'error');
     }

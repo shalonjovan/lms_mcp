@@ -100,9 +100,18 @@ async def api_list_assignments_live():
     try:
         await login()
         assignments = await list_assignments()
+        saved = []
         for a in assignments:
+            # Save to DB
             save_assignment(a["id"], a)
-        return {"assignments": assignments}
+            # Check submission status
+            try:
+                status = await get_submission_status(a["id"])
+            except Exception:
+                status = "unknown"
+            a["status"] = status
+            saved.append(a)
+        return {"assignments": saved}
     except Exception as e:
         logger.exception("Failed to fetch live assignments")
         raise HTTPException(status_code=500, detail=str(e))
