@@ -77,6 +77,14 @@ async def get_submission_status(assignment_id: str) -> str:
     url = f"{LMS_URL}/mod/assign/view.php?id={assignment_id}"
     await page.goto(url, wait_until="networkidle")
 
+    # Check for the submission status table (standard Moodle)
+    status_table = await page.query_selector("div.submissionstatustable")
+    if status_table:
+        status_cell = await status_table.query_selector("td[class*='submissionstatus']")
+        if status_cell:
+            return (await status_cell.inner_text()).strip()
+
+    # Fallback: older selector
     status_el = await page.query_selector("div[data-region='submission-status']")
     if status_el:
         return (await status_el.inner_text()).strip()

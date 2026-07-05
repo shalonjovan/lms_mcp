@@ -11,10 +11,12 @@ from playwright.async_api import Page
 from config.settings import LMS_URL, GENERATED_DIR
 from app.lms.browser import get_page
 from app.lms.selectors import (
+    ASSIGNMENT_CARD,
     ASSIGNMENT_LINK,
     ASSIGNMENT_TITLE,
     ASSIGNMENT_INTRO,
     ATTACHMENT_LINKS,
+    TIMELINE_EVENT_LINK,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,35 +33,71 @@ async def list_assignments() -> list[dict[str, Any]]:
 
     assignments = []
 
-    # Find all assignment links on the dashboard
-    links = await page.query_selector_all(ASSIGNMENT_LINK)
-    for link in links:
-        href = await link.get_attribute("href") or ""
-        title = (await link.inner_text()).strip()
+    # Get assignments from dashboard cards (recently accessed items)
+    cards = await page.query_selector_all(ASSIGNMENT_CARD)
+    seen_ids = set()
 
-        # Extract assignment ID from URL
+    for card in cards:
+        href = await card.get_attribute("href") or ""
+        if not href:
+            continue
+
         match = re.search(r"id=(\d+)", href)
         if not match:
             continue
         assign_id = match.group(1)
-
-        # Skip duplicates
-        if any(a["id"] == assign_id for a in assignments):
+        if assign_id in seen_ids:
             continue
+        seen_ids.add(assign_id)
 
-        # Try to get the parent card for more context (course name, due date)
-        card = await link.evaluate("(el) => el.closest('.card-body, li, .timeline-event')")
+        # Title from the card's title attribute (more reliable)
+        title = (await card.get_attribute("title")) or ""
+        # Fallback: get from the inner text
+        if not title:
+            title = (await card.inner_text()).strip()
+
+        # Course name from the small element inside the card
         course = ""
-        due_date = ""
-        status = "unknown"
+        try:
+            small_el = await card.query_selector("small.text-truncate")
+            if small_el:
+                course = (await small_el.inner_text()).strip()
+        except Exception:
+            pass
 
         assignments.append({
             "id": assign_id,
             "title": title,
             "url": href if href.startswith("http") else f"{LMS_URL}{href}",
             "course": course,
-            "due_date": due_date,
-            "status": status,
+            "due_date": "",
+            "status": "unknown",
+        })
+
+    # Also check timeline events for upcoming assignments not in recently accessed
+    timeline_links = await page.query_selector_all(TIMELINE_EVENT_LINK)
+    for link in timeline_links:
+        href = await link.get_attribute("href") or ""
+        match = re.search(r"id=(\d+)", href)
+        if not match:
+            continue
+        assign_id = match.group(1)
+        if assign_id in seen_ids:
+            continue
+        seen_ids.add(assign_id)
+
+        title = (await link.get_attribute("title") or "").replace(" is due", "")
+        # Fallback: get inner text
+        if not title:
+            title = (await link.inner_text()).strip()
+
+        assignments.append({
+            "id": assign_id,
+            "title": title,
+            "url": href if href.startswith("http") else f"{LMS_URL}{href}",
+            "course": "",
+            "due_date": "",
+            "status": "unknown",
         })
 
     return assignments
@@ -122,10 +160,17 @@ async def get_assignment(assignment_id: str) -> dict[str, Any]:
     if date_section:
         result["due_date"] = (await date_section.inner_text()).strip()
 
-    # Submission status
-    status_section = await page.query_selector("div[data-region='submission-status']")
-    if status_section:
-        result["submission_status"] = (await status_section.inner_text()).strip()
+    # Submission status — look for the status table in the Moodle assignment page
+    status_table = await page.query_selector("div.submissionstatustable")
+    if status_table:
+        status_cell = await status_table.query_selector("td[class*='submissionstatus']")
+        if status_cell:
+            result["submission_status"] = (await status_cell.inner_text()).strip()
+    else:
+        # Fallback: try older selector
+        status_section = await page.query_selector("div[data-region='submission-status']")
+        if status_section:
+            result["submission_status"] = (await status_section.inner_text()).strip()
 
     return result
 

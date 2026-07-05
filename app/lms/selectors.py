@@ -13,11 +13,13 @@ USER_MENU = "a.dropdown-toggle[data-toggle='dropdown']"  # logged-in indicator
 
 # Dashboard / My home
 DASHBOARD_TIMELINE = "div[data-region='timeline-view']"
-ASSIGNMENT_CARD = (
-    "div.card-body"
-)
+ASSIGNMENT_CARD = "a.card.dashboard-card[href*='/mod/assign/view.php']"
 ASSIGNMENT_LINK = "a[href*='/mod/assign/view.php']"
 COURSE_LINK = "a[href*='/course/view.php']"
+
+# Dashboard timeline events (upcoming assignments)
+TIMELINE_EVENT_LINK = "div[data-region='event-list-item'] a[href*='/mod/assign/view.php']:not([href*='action='])"
+TIMELINE_ACTION_BUTTON = "a[href*='/mod/assign/view.php'][href*='action=editsubmission']"
 
 # Course page
 COURSE_SECTION = "li.section"
