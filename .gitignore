@@ -226,3 +226,6 @@ site_files/
 .claude/settings.local.json
 
 testing/
+*.pyc
+.venv/
+.claude/
