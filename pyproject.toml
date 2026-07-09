@@ -31,3 +31,20 @@ exclude = ["site_files", "data", "generated", "tests"]
 
 [tool.setuptools.package-data]
 "*" = ["*.html", "*.j2"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+ignore = ["E402", "E731", "F401", "F841"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = ["asyncio: mark test as async"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::PendingDeprecationWarning"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/*/test_*", "tests/*"]

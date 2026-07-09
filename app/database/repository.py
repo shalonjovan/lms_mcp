@@ -144,7 +144,7 @@ def update_submission_status(submission_id: int, status: str):
 def get_latest_submission(assignment_id: str) -> dict[str, Any] | None:
     with _get_conn() as conn:
         row = conn.execute(
-            "SELECT * FROM submissions WHERE assignment_id = ? ORDER BY created_at DESC LIMIT 1",
+            "SELECT * FROM submissions WHERE assignment_id = ? ORDER BY id DESC LIMIT 1",
             (assignment_id,),
         ).fetchone()
         return dict(row) if row else None
