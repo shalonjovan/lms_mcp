@@ -4,17 +4,19 @@ import argparse
 import asyncio
 import logging
 import signal
-import sys
 
 import uvicorn
 
-from config.settings import DATABASE_PATH, MCP_SERVER_HOST, MCP_SERVER_PORT
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    stream=sys.stderr,
+from config.settings import (
+    DATABASE_PATH,
+    MCP_SERVER_HOST,
+    MCP_SERVER_PORT,
+    setup_logging,
+    validate_config,
 )
+
+setup_logging()
+validate_config()
 logger = logging.getLogger(__name__)
 
 

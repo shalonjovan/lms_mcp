@@ -1,7 +1,6 @@
 """MCP Server — registers all LMS tools, resources, and prompts for AI agent consumption."""
 
 import logging
-import sys
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -218,24 +217,21 @@ async def check_submission_open(assignment_id: str) -> dict:
 
 def run_server():
     """Run the MCP server using stdio transport."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s | %(name)s | %(message)s",
-        stream=sys.stderr,
-    )
+    from config.settings import setup_logging
+    setup_logging()
     logger.info("Starting LMS Assistant MCP Server (stdio)...")
     mcp.run(transport="stdio")
 
 
-def run_sse_server(host: str = "127.0.0.1", port: int = 8081):
+def run_sse_server():
     """Run the MCP server using SSE transport (for web/multi-server mode)."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s | %(name)s | %(message)s",
-        stream=sys.stderr,
+    from config.settings import setup_logging
+    setup_logging()
+    logger.info(
+        "Starting LMS Assistant MCP Server (SSE) on %s:%s...",
+        mcp.settings.host, mcp.settings.port,
     )
-    logger.info("Starting LMS Assistant MCP Server (SSE) on %s:%s...", host, port)
-    mcp.run(transport="sse", host=host, port=port)
+    mcp.run(transport="sse")
 
 
 if __name__ == "__main__":
