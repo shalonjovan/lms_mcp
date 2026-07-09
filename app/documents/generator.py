@@ -31,21 +31,18 @@ from app.documents.templates import get_student_info
 
 logger = logging.getLogger(__name__)
 
-# ─── Colors ─────────────────────────────────────────────────────────────
+# ─── Colors (monochrome — black, white, grey only) ─────────────────────
 
-C_PRIMARY = colors.HexColor("#1a237e")
-C_ACCENT = colors.HexColor("#283593")
-C_CODE_BG = colors.HexColor("#f5f5f5")
-C_CODE_BORDER = colors.HexColor("#e0e0e0")
-C_IO_BG = colors.HexColor("#e8f5e9")
-C_IO_BORDER = colors.HexColor("#a5d6a7")
-C_INPUT_BG = colors.HexColor("#e3f2fd")
-C_INPUT_BORDER = colors.HexColor("#90caf9")
-C_OUTPUT_BG = colors.HexColor("#fff3e0")
-C_OUTPUT_BORDER = colors.HexColor("#ffcc80")
-C_SEPARATOR = colors.HexColor("#bbdefb")
-C_HEADER_BG = colors.HexColor("#e8eaf6")
-C_HEADER_BORDER = colors.HexColor("#c5cae9")
+_C_BLACK = colors.black
+_C_DARK = colors.HexColor("#333333")
+_C_MID = colors.HexColor("#666666")
+_C_LIGHT = colors.HexColor("#999999")
+_C_CODE_BG = colors.HexColor("#f2f2f2")
+_C_CODE_BORDER = colors.HexColor("#cccccc")
+_C_IO_BG = colors.HexColor("#f9f9f9")
+_C_IO_BORDER = colors.HexColor("#aaaaaa")
+_C_HEADER_BG = colors.HexColor("#f0f0f0")
+_C_HEADER_BORDER = colors.HexColor("#cccccc")
 
 # ─── Styles ──────────────────────────────────────────────────────────────
 
@@ -55,7 +52,7 @@ def _build_styles() -> dict:
     return {
         "header_label": ParagraphStyle(
             "HdrLabel", parent=base["Normal"],
-            fontSize=10, leading=14, textColor=C_PRIMARY,
+            fontSize=10, leading=14,
             spaceAfter=0, spaceBefore=0,
         ),
         "header_value": ParagraphStyle(
@@ -66,21 +63,21 @@ def _build_styles() -> dict:
         "title": ParagraphStyle(
             "DocTitle", parent=base["Title"],
             fontSize=18, leading=24, alignment=TA_CENTER,
-            textColor=C_PRIMARY, spaceAfter=16, spaceBefore=8,
+            textColor=_C_DARK, spaceAfter=16, spaceBefore=8,
         ),
         "heading1": ParagraphStyle(
             "DocH1", parent=base["Heading1"],
-            fontSize=16, leading=22, textColor=C_PRIMARY,
+            fontSize=16, leading=22, textColor=_C_DARK,
             spaceBefore=18, spaceAfter=8,
         ),
         "heading2": ParagraphStyle(
             "DocH2", parent=base["Heading2"],
-            fontSize=14, leading=20, textColor=C_ACCENT,
+            fontSize=14, leading=20, textColor=_C_DARK,
             spaceBefore=14, spaceAfter=6,
         ),
         "heading3": ParagraphStyle(
             "DocH3", parent=base["Heading3"],
-            fontSize=12, leading=18, textColor=C_PRIMARY,
+            fontSize=12, leading=18, textColor=_C_DARK,
             spaceBefore=10, spaceAfter=4,
         ),
         "body": ParagraphStyle(
@@ -95,13 +92,13 @@ def _build_styles() -> dict:
         ),
         "code": ParagraphStyle(
             "DocCode", parent=base["Code"],
-            fontSize=8.5, leading=12, backColor=C_CODE_BG,
+            fontSize=8.5, leading=12, backColor=_C_CODE_BG,
             leftIndent=8, rightIndent=8, spaceAfter=0, spaceBefore=0,
             fontName="Courier",
         ),
         "io_label": ParagraphStyle(
             "IOLabel", parent=base["Normal"],
-            fontSize=10, leading=14, textColor=colors.HexColor("#2e7d32"),
+            fontSize=10, leading=14, textColor=_C_DARK,
             spaceAfter=2, spaceBefore=0, fontName="Helvetica-Bold",
         ),
         "io_content": ParagraphStyle(
@@ -138,9 +135,9 @@ def _build_header_table(info: dict, subject: str, today: str, styles: dict) -> T
     col_widths = [95, 380]
     t = Table(rows, colWidths=col_widths)
     t.setStyle(TableStyle([
-        ("BOX", (0, 0), (-1, -1), 1, C_HEADER_BORDER),
-        ("INNERGRID", (0, 0), (-1, -1), 0.5, C_HEADER_BORDER),
-        ("BACKGROUND", (0, 0), (0, -1), C_HEADER_BG),
+        ("BOX", (0, 0), (-1, -1), 1, _C_HEADER_BORDER),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, _C_HEADER_BORDER),
+        ("BACKGROUND", (0, 0), (0, -1), _C_HEADER_BG),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING", (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
@@ -172,8 +169,8 @@ def _render_code_block(lines: list[str], styles: dict) -> list:
     cell_lines = [Paragraph(ln or " ", styles["code"]) for ln in code_lines]
     cell = Table([[cl] for cl in cell_lines], colWidths=[460])
     cell.setStyle(TableStyle([
-        ("BOX", (0, 0), (-1, -1), 1, C_CODE_BORDER),
-        ("BACKGROUND", (0, 0), (-1, -1), C_CODE_BG),
+        ("BOX", (0, 0), (-1, -1), 1, _C_CODE_BORDER),
+        ("BACKGROUND", (0, 0), (-1, -1), _C_CODE_BG),
         ("TOPPADDING", (0, 0), (-1, -1), 1),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
         ("LEFTPADDING", (0, 0), (-1, -1), 10),
@@ -217,12 +214,12 @@ def _detect_and_render_io(lines: list[str], idx: int, styles: dict) -> tuple[lis
     clean_line = re.sub(r"^#+\s*", "", line).rstrip(":").strip()
 
     io_patterns = {
-        "Input": (C_INPUT_BG, C_INPUT_BORDER, "io_content"),
-        "Output": (C_OUTPUT_BG, C_OUTPUT_BORDER, "io_content"),
-        "Sample Input": (C_INPUT_BG, C_INPUT_BORDER, "io_content"),
-        "Sample Output": (C_OUTPUT_BG, C_OUTPUT_BORDER, "io_content"),
-        "Example Input": (C_INPUT_BG, C_INPUT_BORDER, "io_content"),
-        "Example Output": (C_OUTPUT_BG, C_OUTPUT_BORDER, "io_content"),
+        "Input": (_C_IO_BG, _C_IO_BORDER, "io_content"),
+        "Output": (_C_IO_BG, _C_IO_BORDER, "io_content"),
+        "Sample Input": (_C_IO_BG, _C_IO_BORDER, "io_content"),
+        "Sample Output": (_C_IO_BG, _C_IO_BORDER, "io_content"),
+        "Example Input": (_C_IO_BG, _C_IO_BORDER, "io_content"),
+        "Example Output": (_C_IO_BG, _C_IO_BORDER, "io_content"),
     }
 
     matched_label = None
@@ -281,12 +278,11 @@ def _page_template(canvas, doc):
     """Draw header line and page number on each page."""
     canvas.saveState()
     # Header line
-    canvas.setStrokeColor(C_HEADER_BORDER)
+    canvas.setStrokeColor(_C_MID)
     canvas.setLineWidth(0.5)
     canvas.line(inch, A4[1] - 0.5 * inch, A4[0] - inch, A4[1] - 0.5 * inch)
-    # Page number
     canvas.setFont("Helvetica", 8)
-    canvas.setFillColor(colors.grey)
+    canvas.setFillColor(_C_MID)
     canvas.drawCentredString(A4[0] / 2, 0.5 * inch, f"Page {doc.page}")
     canvas.restoreState()
 
@@ -322,7 +318,7 @@ def generate_pdf(
     # ── Title ───────────────────────────────────────────────────────
     elements.append(Paragraph(title, styles["title"]))
     elements.append(HRFlowable(
-        width="100%", thickness=1.5, color=C_SEPARATOR, spaceAfter=12, spaceBefore=0,
+        width="100%", thickness=1, color=_C_LIGHT, spaceAfter=12, spaceBefore=0,
     ))
 
     # ── Markdown → PDF content ──────────────────────────────────────
@@ -406,11 +402,11 @@ def generate_pdf(
     # ── Footer separator ────────────────────────────────────────────
     elements.append(Spacer(1, 20))
     elements.append(HRFlowable(
-        width="100%", thickness=0.5, color=C_CODE_BORDER, spaceAfter=6, spaceBefore=0,
+        width="100%", thickness=0.5, color=_C_LIGHT, spaceAfter=6, spaceBefore=0,
     ))
     elements.append(Paragraph(
         "Generated by AI-Powered LMS Assistant",
-        ParagraphStyle("Footer", fontSize=8, textColor=colors.grey, alignment=TA_CENTER),
+        ParagraphStyle("Footer", fontSize=8, textColor=_C_LIGHT, alignment=TA_CENTER),
     ))
 
     doc.build(elements, onFirstPage=_page_template, onLaterPages=_page_template)
@@ -492,13 +488,13 @@ def generate_docx(
     run_t = p_title.add_run(title)
     run_t.bold = True
     run_t.font.size = Pt(18)
-    run_t.font.color.rgb = RGBColor(0x1a, 0x23, 0x7e)
+    run_t.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
 
     # Separator
     p_sep = doc.add_paragraph()
     p_sep.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_sep = p_sep.add_run("─" * 70)
-    run_sep.font.color.rgb = RGBColor(0xbb, 0xde, 0xfb)
+    run_sep.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
     run_sep.font.size = Pt(8)
 
     # ── Content ─────────────────────────────────────────────────────
@@ -530,7 +526,7 @@ def generate_docx(
     def flush_io_block():
         nonlocal block_io_lines, io_type, in_io_block
         if block_io_lines:
-            bg = "e3f2fd" if "input" in io_type.lower() else "fff3e0"
+            bg = "f9f9f9"
             table = doc.add_table(rows=1, cols=1)
             table.style = "Table Grid"
             cell = table.rows[0].cells[0]
@@ -540,7 +536,7 @@ def generate_docx(
             label_run = cell.paragraphs[0].add_run(f"{io_type}")
             label_run.bold = True
             label_run.font.size = Pt(10)
-            label_run.font.color.rgb = RGBColor(0x2e, 0x7d, 0x32)
+            label_run.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
             cell.paragraphs[0].add_run("\n")
             for bl in block_io_lines:
                 if bl == "":
@@ -600,21 +596,21 @@ def generate_docx(
             run = p.add_run(stripped[2:])
             run.bold = True
             run.font.size = Pt(16)
-            run.font.color.rgb = RGBColor(0x1a, 0x23, 0x7e)
+            run.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
             continue
         if stripped.startswith("## "):
             p = doc.add_paragraph()
             run = p.add_run(stripped[3:])
             run.bold = True
             run.font.size = Pt(14)
-            run.font.color.rgb = RGBColor(0x28, 0x35, 0x93)
+            run.font.color.rgb = RGBColor(0x33, 0x33, 0x33)
             continue
         if stripped.startswith("### "):
             p = doc.add_paragraph()
             run = p.add_run(stripped[4:])
             run.bold = True
             run.font.size = Pt(12)
-            run.font.color.rgb = RGBColor(0x1a, 0x23, 0x7e)
+            run.font.color.rgb = RGBColor(0x33, 0x33, 0x33)
             continue
 
         # Bullets
@@ -629,7 +625,7 @@ def generate_docx(
             run_num = p.add_run(f"{match.group(1)}. ")
             run_num.bold = True
             run_num.font.size = Pt(11)
-            run_num.font.color.rgb = RGBColor(0x1a, 0x23, 0x7e)
+            run_num.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
             run_rest = p.add_run(match.group(2))
             run_rest.font.size = Pt(11)
             continue
