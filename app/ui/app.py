@@ -10,12 +10,12 @@ from app.ui.routes import router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: initialize database
     from config.settings import DATABASE_PATH
     from app.database.models import init_db
     init_db(str(DATABASE_PATH))
     yield
-    # Shutdown: nothing to clean up
+    from app.lms.browser import close_browser
+    await close_browser()
 
 
 app = FastAPI(title="LMS Assistant", version="0.1.0", lifespan=lifespan)

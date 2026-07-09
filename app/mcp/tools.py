@@ -10,6 +10,7 @@ from app.lms.assignments import (
     download_attachment as lms_download_attachment,
 )
 from app.lms.submission import (
+    check_submission_open as lms_check_open,
     upload_submission as lms_upload,
     submit_assignment as lms_submit,
     get_submission_status as lms_status,
@@ -230,8 +231,27 @@ async def generate_document(assignment_id: str, fmt: str = "docx") -> str:
     return str(path)
 
 
+async def check_submission_open(assignment_id: str) -> dict:
+    """Check if the submission window for an assignment is currently open.
+
+    Inspects the assignment view page for action buttons, status, and
+    time-remaining indicators before attempting any submission action.
+
+    Args:
+        assignment_id: The assignment ID.
+
+    Returns:
+        Dict with open (bool), status, time_remaining, has_action_buttons, details.
+    """
+    result = await lms_check_open(assignment_id)
+    log_history(assignment_id, "check_open", f"Open: {result['open']} | Status: {result['status']}")
+    return result
+
+
 async def upload_submission(assignment_id: str, file_path: str) -> str:
     """Upload a file to the LMS assignment submission page.
+
+    Checks if the submission window is open before attempting upload.
 
     Args:
         assignment_id: The assignment ID.
@@ -242,6 +262,17 @@ async def upload_submission(assignment_id: str, file_path: str) -> str:
     """
     if not Path(file_path).exists():
         return f"Error: File not found at {file_path}"
+
+    open_check = await lms_check_open(assignment_id)
+    if not open_check["open"]:
+        msg = (
+            f"Upload blocked: submission window is closed for "
+            f"assignment {assignment_id}. Status: {open_check['status']}. "
+            f"Time remaining: {open_check['time_remaining']}"
+        )
+        logger.warning(msg)
+        log_history(assignment_id, "upload_blocked", msg)
+        return msg
 
     success = await lms_upload(assignment_id, file_path)
     if success:
@@ -254,12 +285,25 @@ async def upload_submission(assignment_id: str, file_path: str) -> str:
 async def submit_assignment(assignment_id: str) -> str:
     """Submit an uploaded assignment.
 
+    Checks if the submission window is open before attempting submission.
+
     Args:
         assignment_id: The assignment ID.
 
     Returns:
         Status message.
     """
+    open_check = await lms_check_open(assignment_id)
+    if not open_check["open"]:
+        msg = (
+            f"Submission blocked: submission window is closed for "
+            f"assignment {assignment_id}. Status: {open_check['status']}. "
+            f"Time remaining: {open_check['time_remaining']}"
+        )
+        logger.warning(msg)
+        log_history(assignment_id, "submit_blocked", msg)
+        return msg
+
     success = await lms_submit(assignment_id)
     if success:
         update_assignment_status(assignment_id, "submitted")

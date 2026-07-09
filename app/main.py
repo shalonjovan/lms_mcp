@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import logging
+import signal
 import sys
 
 import uvicorn
@@ -17,6 +18,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _init_db():
+    from app.database.models import init_db
+    init_db(str(DATABASE_PATH))
+    logger.info("Database initialized at %s", DATABASE_PATH)
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="LMS Assistant")
@@ -29,10 +36,7 @@ def main():
     )
     args = parser.parse_args()
 
-    # Always init the database
-    from app.database.models import init_db
-    init_db(str(DATABASE_PATH))
-    logger.info(f"Database initialized at {DATABASE_PATH}")
+    _init_db()
 
     if args.mode == "init-db":
         return
@@ -43,38 +47,48 @@ def main():
 
     elif args.mode == "web":
         from app.ui.app import app
-        logger.info(f"Starting web UI at http://{MCP_SERVER_HOST}:{MCP_SERVER_PORT}")
+        logger.info("Starting web UI at http://%s:%s", MCP_SERVER_HOST, MCP_SERVER_PORT)
         uvicorn.run(app, host=MCP_SERVER_HOST, port=MCP_SERVER_PORT)
 
     elif args.mode == "all":
-        # Run both MCP server and web UI
-        async def run_all():
-            from app.mcp.server import run_server as mcp_run
-            from app.ui.app import app as fastapi_app
-            from app.scheduler.monitor import start_monitoring
-
-            # Start scheduler
-            await start_monitoring()
-
-            # Run both servers
-            import asyncio
-            server_task = asyncio.create_task(
-                asyncio.to_thread(
-                    uvicorn.run,
-                    fastapi_app,
-                    host=MCP_SERVER_HOST,
-                    port=MCP_SERVER_PORT,
-                    log_level="info",
-                )
-            )
-            # MCP on stdio — just run it (blocks)
-            logger.info("Starting MCP server (stdio) + Web UI + Scheduler...")
-            await server_task
-
-        asyncio.run(run_all())
+        asyncio.run(_run_all())
 
     else:
         parser.print_help()
+
+
+async def _run_all():
+    """Run MCP (SSE, mounted on web UI) + Scheduler."""
+    from app.mcp.server import mcp as mcp_server
+    from app.ui.app import app as fastapi_app
+    from app.scheduler.monitor import start_monitoring, stop_monitoring
+
+    # Mount MCP SSE transport on the FastAPI app
+    fastapi_app.mount("/mcp", mcp_server.sse_app())
+
+    await start_monitoring()
+    logger.info(
+        "Starting Web UI (%s:%s), MCP SSE at /mcp, Scheduler...",
+        MCP_SERVER_HOST, MCP_SERVER_PORT,
+    )
+
+    config = uvicorn.Config(
+        fastapi_app,
+        host=MCP_SERVER_HOST,
+        port=MCP_SERVER_PORT,
+        log_level="info",
+    )
+    server = uvicorn.Server(config)
+
+    def _shutdown():
+        server.should_exit = True
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, _shutdown)
+
+    await server.serve()
+    await stop_monitoring()
 
 
 if __name__ == "__main__":
