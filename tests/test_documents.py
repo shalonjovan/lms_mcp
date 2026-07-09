@@ -40,6 +40,12 @@ class TestGenerateDocx:
         path = generate_docx("998", "Header Test", "SubjectX", sample_solution)
         doc = Document(str(path))
         found = any("SubjectX" in p.text for p in doc.paragraphs)
+        # Also check table cells
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if "SubjectX" in cell.text:
+                        found = True
         assert found
         path.unlink(missing_ok=True)
 

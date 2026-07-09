@@ -14,12 +14,17 @@ Output in Markdown format.""",
 
     "programming": """You are solving a programming assignment. 
 Given the assignment instructions, produce:
-1. A clear explanation of the approach
-2. Well-commented source code
-3. Example input/output or test cases
+1. A clear explanation of the approach/algorithm
+2. Well-commented source code in proper code blocks (```language)
+3. **Sample Input** and **Sample Output** sections showing example test cases
 4. Any necessary setup instructions
 
-Output your solution in Markdown format with code blocks.""",
+IMPORTANT FORMATTING RULES:
+- Use "## Sample Input" and "## Sample Output" as separate sections for example test cases
+- If there are multiple test cases, show them all
+- Use "## Approach" for the explanation section
+- Use "## Code" for the implementation section
+- Output in Markdown format with clearly separated sections.""",
 
     "presentation": """You are creating content for a presentation assignment.
 Given the topic and instructions, produce:
